@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Strona dla Dziewczyny</title>
+  <style>
+    /* Globalne style i motyw różowy */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #ffe6f2;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Kontener dla animowanych serduszek */
+    #heartContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    /* Styl serduszka */
+    .heart {
+      position: absolute;
+      bottom: -50px;
+      color: #ff66b3;
+      opacity: 0.8;
+      animation-name: floatUp;
+      animation-timing-function: linear;
+      animation-iteration-count: 1;
+    }
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) scale(0.5);
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-110vh) scale(1.2);
+        opacity: 0;
+      }
+    }
+    .screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    h1, h2 {
+      color: #d63384;
+    }
+    .subtext {
+      font-size: 1.2em;
+      color: #a8326b;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: #ff99cc;
+      border: none;
+      border-radius: 20px;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    button:hover {
+      background-color: #ff66b3;
+    }
+    .rounded-box {
+      padding: 20px;
+      border: 2px solid #d63384;
+      border-radius: 15px;
+      background-color: #fff0f5;
+      margin: 20px;
+      width: 300px;
+    }
+    .message-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #ffb3d9;
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 1.5em;
+      color: #d63384;
+      z-index: 1000;
+    }
+    /* Pasek ładowania */
+    #progressContainer {
+      width: 300px;
+      height: 20px;
+      border: 2px solid #d63384;
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background-color: #ff99cc;
+    }
+    /* Timer box styling */
+    .timer-box {
+      padding: 20px;
+      border: 2px solid #d63384;
+      border-radius: 15px;
+      background-color: #fff0f5;
+      margin: 20px;
+      width: 350px;
+      font-size: 1.2em;
+      color: #a8326b;
+    }
+    /* Wiadomości – wyświetlane w dedykowanym miejscu */
+    #messageBox {
+      margin-top: 20px;
+      min-height: 40px;
+      font-size: 1em;
+      color: #d63384;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+    /* Final screen styling */
+    .final-text {
+      font-size: 1.5em;
+      color: #d63384;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Kontener dla serduszek -->
+  <div id="heartContainer"></div>
+
+  <div id="container">
+    <!-- Ekran początkowy -->
+    <div id="initialScreen" class="screen">
+      <h1>Czas razem</h1>
+      <p class="subtext">Czy chcesz zobaczyć pookie jak długo się znamy?</p>
+      <div class="buttons">
+        <button id="btnTak">Tak</button>
+        <button id="btnPozniej">Może pózniej</button>
+      </div>
+    </div>
+    <!-- Komunikat dla "moze pózniej" -->
+    <div id="waitMessage" class="message-overlay" style="display:none;">
+      Będe czekał! <3
+    </div>
+    <!-- Ekran ładowania -->
+    <div id="loadingScreen" class="screen" style="display:none;">
+      <h2>Obliczanie...</h2>
+      <div class="rounded-box">
+        Ładowanie czasu spędzonego razem
+      </div>
+      <div id="progressContainer">
+        <div id="progressBar"></div>
+      </div>
+    </div>
+    <!-- Ekran timera i wiadomości -->
+    <div id="timerScreen" class="screen" style="display:none;">
+      <div class="timer-box">
+        <h2>Czas od kiedy się znamy</h2>
+        <div id="timer"></div>
+      </div>
+      <div id="messageBox"></div>
+      <button id="btnForever" style="display:none;">Na zawsze</button>
+    </div>
+    <!-- Ekran końcowy -->
+    <div id="finalScreen" class="screen" style="display:none;">
+      <h2>Na zawsze razem❤️</h2>
+      <p class="final-text">nasza historia trwa dalej...</p>
+      <button id="btnRepeat">powtórz</button>
+    </div>
+  </div>
+
+  <script>
+    // Lista wiadomości do wyświetlenia
+    const messages = [
+  "",  
+  "Czy pamiętasz o czym pisaliśmy po raz 1 na yubo?❤️",
+  "Mamy dużo wspomnień! 💗",
+  "Jesteś moim kwiatuszkiem 💜",
+  "Dziękuję, że jesteś pookie ❤️",
+  "Dużo przeszliśmy razem 💗",
+  "Kiedy się spotkamy w końcu? 💜",
+  "Kocham cię, moja cutie pie ❤️",
+  "Always and Forever! 💗",
+  "Kontynuujmy naszą historię 💜",
+  "Poprawiasz mi humorek codziennie ❤️",
+  "Jesteś najlepszym, co mnie spotkało 💗",
+  "To my piszemy najpiękniejszą opowieść 💜",
+  "Nigdy cię nie opuszczę, kochanie ❤️",
+  "Jesteś najważniejszą osobą na świecie 💗"
+];
+
+    let messageIndex = 0;
+    let messageInterval;
+
+    const initialScreen = document.getElementById('initialScreen');
+    const loadingScreen = document.getElementById('loadingScreen');
+    const timerScreen = document.getElementById('timerScreen');
+    const finalScreen = document.getElementById('finalScreen');
+
+    // Obsługa przycisku "moze pózniej"
+    document.getElementById('btnPozniej').addEventListener('click', () => {
+      const waitMsg = document.getElementById('waitMessage');
+      waitMsg.style.display = 'block';
+      setTimeout(() => {
+        waitMsg.style.display = 'none';
+      }, 3000);
+    });
+
+    // Obsługa przycisku "Tak"
+    document.getElementById('btnTak').addEventListener('click', () => {
+      initialScreen.style.display = 'none';
+      loadingScreen.style.display = 'flex';
+      startLoading();
+    });
+
+    // Funkcja symulująca ładowanie z animacją paska postępu
+    function startLoading() {
+      const progressBar = document.getElementById('progressBar');
+      let width = 0;
+      const interval = setInterval(() => {
+        width += 1; // wzrost o 1% co 30ms – ok. 3 sekundy
+        progressBar.style.width = width + '%';
+        if (width >= 100) {
+          clearInterval(interval);
+          loadingScreen.style.display = 'none';
+          timerScreen.style.display = 'flex';
+          startTimer();
+          startMessages();
+        }
+      }, 30);
+    }
+
+    // Funkcja startująca odliczanie od 1 sierpnia 2023
+    function startTimer() {
+      const startDate = new Date("2023-08-01T00:00:00");
+      updateTimer();
+      setInterval(updateTimer, 1000);
+      function updateTimer() {
+        const now = new Date();
+        let diff = now - startDate;
+        if(diff < 0) diff = 0;
+        let years = now.getFullYear() - startDate.getFullYear();
+        let months = now.getMonth() - startDate.getMonth();
+        let days = now.getDate() - startDate.getDate();
+        let hours = now.getHours() - startDate.getHours();
+        let minutes = now.getMinutes() - startDate.getMinutes();
+        let seconds = now.getSeconds() - startDate.getSeconds();
+        if(seconds < 0) {
+          seconds += 60;
+          minutes--;
+        }
+        if(minutes < 0) {
+          minutes += 60;
+          hours--;
+        }
+        if(hours < 0) {
+          hours += 24;
+          days--;
+        }
+        if(days < 0) {
+          let prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+          days += prevMonth.getDate();
+          months--;
+        }
+        if(months < 0) {
+          months += 12;
+          years--;
+        }
+        // Wyświetlanie każdej jednostki w osobnej linii
+        document.getElementById('timer').innerHTML =
+          years + " rok<br>" + 
+          months + " miesięcy<br>" + 
+          days + " dni<br>" + 
+          hours + " godzin<br>" + 
+          minutes + " minut<br>" + 
+          seconds + " sekund";
+      }
+    }
+
+    // Funkcja wyświetlająca wiadomości – jedna na raz, z efektem zanikania
+    function startMessages() {
+      messageIndex = 0;
+      const messageBox = document.getElementById('messageBox');
+      messageInterval = setInterval(() => {
+        if (messageIndex < messages.length) {
+          messageBox.style.opacity = 0;
+          setTimeout(() => {
+            messageBox.textContent = messages[messageIndex];
+            messageBox.style.opacity = 1;
+          }, 500);
+          messageIndex++;
+        } else {
+          clearInterval(messageInterval);
+          document.getElementById('btnForever').style.display = 'block';
+        }
+      }, 2500); // zmiana wiadomości co 2.5 sekundy
+    }
+
+    // Obsługa przycisku "Na zawsze"
+    document.getElementById('btnForever').addEventListener('click', () => {
+      clearInterval(messageInterval);
+      timerScreen.style.display = 'none';
+      finalScreen.style.display = 'flex';
+    });
+
+    // Obsługa przycisku "powtórz" – resetuje stronę do stanu początkowego
+    document.getElementById('btnRepeat').addEventListener('click', () => {
+      finalScreen.style.display = 'none';
+      timerScreen.style.display = 'none';
+      initialScreen.style.display = 'flex';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('messageBox').textContent = '';
+      document.getElementById('btnForever').style.display = 'none';
+    });
+
+    // Funkcja tworząca animowane serduszko
+    function createHeart() {
+      const heart = document.createElement("div");
+      heart.classList.add("heart");
+      // Używamy symbolu serca (Unicode)
+      heart.innerHTML = "&#10084;&#65039;";
+      heart.style.left = Math.random() * 100 + "vw";
+      const size = Math.random() * 20 + 10; // rozmiar od 10 do 30px
+      heart.style.fontSize = size + "px";
+      const duration = Math.random() * 3 + 4; // czas animacji 4-7 sekund
+      heart.style.animationDuration = duration + "s";
+      document.getElementById("heartContainer").appendChild(heart);
+      // Usuwanie serduszka po zakończeniu animacji
+      setTimeout(() => {
+        heart.remove();
+      }, duration * 1000);
+    }
+    // Generuj serduszka co 500ms
+    setInterval(createHeart, 500);
+  </script>
+</body>
+</html>
